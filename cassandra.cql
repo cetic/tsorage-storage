@@ -83,12 +83,17 @@ CREATE TABLE tsorage.dynamic_tagset(
     shard text,
     tagname text,
     tagvalue text,
-    PRIMARY KEY ((metric), shard, tagname)
-) WITH CLUSTERING ORDER BY (shard ASC);
+    PRIMARY KEY ((metric, shard), tagname, tagvalue)
+) WITH CLUSTERING ORDER BY (tagname ASC, tagvalue ASC);
 
 CREATE MATERIALIZED VIEW tsorage.reverse_dynamic_tagset AS
     SELECT tagname, tagvalue, shard, metric
     FROM tsorage.dynamic_tagset
-    WHERE tagname IS NOT NULL AND tagvalue IS NOT NULL
-    PRIMARY KEY (( tagname, tagvalue ), shard)
-WITH CLUSTERING ORDER BY (shard ASC);
+    WHERE shard IS NOT NULL AND tagname IS NOT NULL AND tagvalue IS NOT NULL AND metric IS NOT NULL
+    PRIMARY KEY (( tagname, tagvalue ), shard, metric)
+WITH CLUSTERING ORDER BY (shard DESC);
+
+INSERT INTO tsorage.dynamic_tagset (metric, shard, tagname, tagvalue) VALUES ('my_metric', '2019-09', 'owner', 'nsa');
+INSERT INTO tsorage.dynamic_tagset (metric, shard, tagname, tagvalue) VALUES ('my_metric', '2019-09', 'quality', 'good');
+INSERT INTO tsorage.dynamic_tagset (metric, shard, tagname, tagvalue) VALUES ('my_metric', '2019-09', 'quality', 'not-so-good');
+INSERT INTO tsorage.dynamic_tagset (metric, shard, tagname, tagvalue) VALUES ('my_metric 2', '2019-09', 'quality', 'not-so-good');
