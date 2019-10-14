@@ -40,31 +40,55 @@ CREATE TABLE tsorage_ts.observations (
 
 
 /**
- * The tagset table for storing the static tagset of all metrics.
+ * The static tagset associated with a metric.
  */
-CREATE TABLE tsorage.tagset (
+CREATE TABLE tsorage.static_tagset (
     metric text,
-    tagset map<text, text>,
-    PRIMARY KEY (metric)
-);
-
-INSERT INTO "tsorage"."tagset" ("metric", "tagset") VALUES ('my_metric', {'owner':'mg', 'quality':'good'});
-
-UPDATE tsorage.tagset
-SET tagset['kind'] = 'foo'
-WHERE metric = 'my_metric';
+    tagname text,
+    tagvalue text,
+    PRIMARY KEY (metric, tagname)
+) WITH CLUSTERING ORDER BY (tagname ASC);
 
 /**
   * The reverse tagset table, for storing the metrics associated with a static tagset.
  */
- CREATE TABLE tsorage.reverse_tagset (
-     tagname text,
-     tagvalue text,
-     metrics set<text>,
-     PRIMARY KEY ( tagname, tagvalue )
- ) WITH CLUSTERING ORDER BY (tagvalue ASC);
+CREATE MATERIALIZED VIEW tsorage.reverse_static_tagset AS
+    SELECT metric, tagname, tagvalue
+    FROM tsorage.static_tagset
+    WHERE tagname IS NOT NULL AND tagvalue IS NOT NULL
+    PRIMARY KEY (tagname, tagvalue, metric)
+WITH CLUSTERING ORDER BY (tagvalue ASC);
 
-UPDATE tsorage.reverse_tagset
-SET metrics = metrics - {'my_metric'}
-WHERE tagname = 'owner' and tagvalue = 'mg';
+INSERT INTO "tsorage"."static_tagset" ("metric", "tagname", "tagvalue") VALUES ('my_metric', 'owner', 'mg');
+INSERT INTO "tsorage"."static_tagset" ("metric", "tagname", "tagvalue") VALUES ('my_metric', 'quality', 'good');
 
+UPDATE tsorage.static_tagset
+SET tagvalue = 'degree celcius'
+WHERE metric = 'my_metric' AND tagname = 'unit';
+
+UPDATE tsorage.static_tagset
+SET tagvalue = 'cetic'
+WHERE metric = 'my_metric' AND tagname = 'owner';
+
+SELECT DISTINCT metric
+FROM tsorage.static_tagset;
+
+
+/**
+ * Shard indices for dynamic tagsets
+ */
+
+CREATE TABLE tsorage.dynamic_tagset(
+    metric text,
+    shard text,
+    tagname text,
+    tagvalue text,
+    PRIMARY KEY ((metric), shard, tagname)
+) WITH CLUSTERING ORDER BY (shard ASC);
+
+CREATE MATERIALIZED VIEW tsorage.reverse_dynamic_tagset AS
+    SELECT tagname, tagvalue, shard, metric
+    FROM tsorage.dynamic_tagset
+    WHERE tagname IS NOT NULL AND tagvalue IS NOT NULL
+    PRIMARY KEY (( tagname, tagvalue ), shard)
+WITH CLUSTERING ORDER BY (shard ASC);
