@@ -40,14 +40,14 @@ CREATE TABLE tsorage_ts.observations (
 
 
 /**
- * The static tagset associated with a metric.
+ * The static tagsets associated with a metric.
  */
 CREATE TABLE tsorage.static_tagset (
     metric text,
     tagname text,
     tagvalue text,
-    PRIMARY KEY (metric, tagname)
-) WITH CLUSTERING ORDER BY (tagname ASC);
+    PRIMARY KEY (metric, tagname, tagvalue)
+) WITH CLUSTERING ORDER BY (tagname ASC, tagvalue ASC);
 
 /**
   * The reverse tagset table, for storing the metrics associated with a static tagset.
@@ -59,7 +59,7 @@ CREATE MATERIALIZED VIEW tsorage.reverse_static_tagset AS
     PRIMARY KEY (tagname, tagvalue, metric)
 WITH CLUSTERING ORDER BY (tagvalue ASC);
 
-INSERT INTO "tsorage"."static_tagset" ("metric", "tagname", "tagvalue") VALUES ('my_metric', 'owner', 'mg');
+INSERT INTO "tsorage"."static_tagset" ("metric", "tagname", "tagvalue") VALUES ('my_metric', 'owner', 'nsa');
 INSERT INTO "tsorage"."static_tagset" ("metric", "tagname", "tagvalue") VALUES ('my_metric', 'quality', 'good');
 
 UPDATE tsorage.static_tagset
@@ -70,31 +70,53 @@ UPDATE tsorage.static_tagset
 SET tagvalue = 'cetic'
 WHERE metric = 'my_metric' AND tagname = 'owner';
 
+/**
+ * The dynamic tagsets associated with a metric.
+ */
+CREATE TABLE tsorage.dynamic_tagset(
+    metric text,
+    tagname text,
+    tagvalue text,
+    PRIMARY KEY (metric, tagname)
+) WITH CLUSTERING ORDER BY (tagname ASC);
+
+CREATE MATERIALIZED VIEW tsorage.reverse_dynamic_tagset AS
+    SELECT tagname, tagvalue, metric
+    FROM tsorage.dynamic_tagset
+    WHERE tagname IS NOT NULL and tagvalue IS NOT NULL and metric IS NOT NULL
+    PRIMARY KEY ( tagname, tagvalue, metric )
+WITH CLUSTERING ORDER BY (tagvalue ASC, metric ASC);
+
+CREATE TABLE tsorage.sharded_dynamic_tagset
+(
+    metric   text,
+    shard    text,
+    tagname  text,
+    tagvalue text,
+    PRIMARY KEY ((metric, shard), tagname)
+) WITH CLUSTERING ORDER BY (tagname ASC);
+
+CREATE MATERIALIZED VIEW tsorage.reverse_sharded_dynamic_tagset AS
+SELECT shard, tagname, tagvalue, metric
+FROM tsorage.sharded_dynamic_tagset
+WHERE shard IS NOT NULL and tagname IS NOT NULL and tagvalue IS NOT NULL and metric IS NOT NULL
+    PRIMARY KEY ( (shard, tagname), tagvalue, metric )
+    WITH CLUSTERING ORDER BY (tagvalue ASC, metric ASC);
+
+
+
+SELECT *
+FROM tsorage.dynamic_tagset
+WHERE metric = 'metric';
+
+SELECT DISTINCT tagname
+FROM tsorage.reverse_dynamic_tagset;
+
+
 SELECT DISTINCT metric
 FROM tsorage.static_tagset;
 
-
-/**
- * Shard indices for dynamic tagsets
- */
-
-CREATE TABLE tsorage.dynamic_tagset(
-    metric text,
-    shard text,
-    tagname text,
-    tagvalue text,
-    PRIMARY KEY ((metric), shard, tagname, tagvalue)
-) WITH CLUSTERING ORDER BY (shard DESC, tagname ASC, tagvalue ASC);
-
-CREATE MATERIALIZED VIEW tsorage.reverse_dynamic_tagset AS
-    SELECT tagname, tagvalue, shard, metric
-    FROM tsorage.dynamic_tagset
-    WHERE shard IS NOT NULL AND tagname IS NOT NULL AND tagvalue IS NOT NULL AND metric IS NOT NULL
-    PRIMARY KEY (( tagname, tagvalue ), shard, metric)
-WITH CLUSTERING ORDER BY (shard DESC);
-
-
-INSERT INTO tsorage.dynamic_tagset (metric, shard, tagname, tagvalue) VALUES ('my_metric', '2019-09', 'owner', 'nsa');
-INSERT INTO tsorage.dynamic_tagset (metric, shard, tagname, tagvalue) VALUES ('my_metric', '2019-09', 'quality', 'good');
-INSERT INTO tsorage.dynamic_tagset (metric, shard, tagname, tagvalue) VALUES ('my_metric', '2019-09', 'quality', 'not-so-good');
-INSERT INTO tsorage.dynamic_tagset (metric, shard, tagname, tagvalue) VALUES ('my_metric 2', '2019-09', 'quality', 'not-so-good');
+INSERT INTO tsorage.dynamic_tagset (metric, tagname, tagvalue) VALUES ('my_metric', '2019-09', 'owner', 'nsa');
+INSERT INTO tsorage.dynamic_tagset (metric, tagname, tagvalue) VALUES ('my_metric', '2019-09', 'quality', 'good');
+INSERT INTO tsorage.dynamic_tagset (metric, tagname, tagvalue) VALUES ('my_metric', '2019-09', 'quality', 'not-so-good');
+INSERT INTO tsorage.dynamic_tagset (metric, tagname, tagvalue) VALUES ('my_metric 2', '2019-09', 'quality', 'not-so-good');
