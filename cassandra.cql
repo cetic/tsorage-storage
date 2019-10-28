@@ -103,14 +103,24 @@ WHERE shard IS NOT NULL and tagname IS NOT NULL and tagvalue IS NOT NULL and met
     PRIMARY KEY ( (shard, tagname), tagvalue, metric )
     WITH CLUSTERING ORDER BY (tagvalue ASC, metric ASC);
 
+CREATE MATERIALIZED VIEW tsorage.reverse_sharded_dynamic_tagname AS
+    SELECT shard, tagname, metric
+    FROM tsorage.sharded_dynamic_tagset
+    WHERE shard IS NOT NULL and tagname IS NOT NULL and metric IS NOT NULL
+PRIMARY KEY ( shard, tagname, metric )
+WITH CLUSTERING ORDER BY (tagname ASC);
 
 
-SELECT *
-FROM tsorage.dynamic_tagset
-WHERE metric = 'metric';
+
+SELECT distinct tagname
+FROM tsorage.reverse_static_tagset;
 
 SELECT DISTINCT tagname
 FROM tsorage.reverse_dynamic_tagset;
+
+SELECT tagname, tagvalue
+FROM tsorage.dynamic_tagset
+WHERE metric = 'my_metric';
 
 
 SELECT DISTINCT metric
