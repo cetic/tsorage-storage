@@ -1,5 +1,5 @@
 /**
- * CQL file used to initialize the database in test environment.
+ * CQL file used to initialize the database in production environment.
  */
 
 CREATE  KEYSPACE IF NOT EXISTS tsorage
@@ -63,17 +63,6 @@ CREATE MATERIALIZED VIEW tsorage.reverse_static_tagset AS
     PRIMARY KEY (tagname, tagvalue, metric)
 WITH CLUSTERING ORDER BY (tagvalue ASC);
 
-INSERT INTO "tsorage"."static_tagset" ("metric", "tagname", "tagvalue") VALUES ('my_metric', 'owner', 'nsa');
-INSERT INTO "tsorage"."static_tagset" ("metric", "tagname", "tagvalue") VALUES ('my_metric', 'quality', 'good');
-
-UPDATE tsorage.static_tagset
-SET tagvalue = 'degree celcius'
-WHERE metric = 'my_metric' AND tagname = 'unit';
-
-UPDATE tsorage.static_tagset
-SET tagvalue = 'cetic'
-WHERE metric = 'my_metric' AND tagname = 'owner';
-
 /**
  * The dynamic tagsets associated with a metric.
  */
@@ -113,24 +102,3 @@ CREATE MATERIALIZED VIEW tsorage.reverse_sharded_dynamic_tagname AS
     WHERE shard IS NOT NULL and tagname IS NOT NULL and metric IS NOT NULL
 PRIMARY KEY ( shard, tagname, metric )
 WITH CLUSTERING ORDER BY (tagname ASC);
-
-
-
-SELECT distinct tagname
-FROM tsorage.reverse_static_tagset;
-
-SELECT DISTINCT tagname
-FROM tsorage.reverse_dynamic_tagset;
-
-SELECT tagname, tagvalue
-FROM tsorage.dynamic_tagset
-WHERE metric = 'my_metric';
-
-
-SELECT DISTINCT metric
-FROM tsorage.static_tagset;
-
-INSERT INTO tsorage.dynamic_tagset (metric, tagname, tagvalue) VALUES ('my_metric', '2019-09', 'owner', 'nsa');
-INSERT INTO tsorage.dynamic_tagset (metric, tagname, tagvalue) VALUES ('my_metric', '2019-09', 'quality', 'good');
-INSERT INTO tsorage.dynamic_tagset (metric, tagname, tagvalue) VALUES ('my_metric', '2019-09', 'quality', 'not-so-good');
-INSERT INTO tsorage.dynamic_tagset (metric, tagname, tagvalue) VALUES ('my_metric 2', '2019-09', 'quality', 'not-so-good');
