@@ -1,3 +1,7 @@
+/**
+ * CQL file used to initialize the database in test environment.
+ */
+
 CREATE  KEYSPACE IF NOT EXISTS tsorage
     WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 }
     AND DURABLE_WRITES = true;
