@@ -21,26 +21,28 @@ CREATE TYPE tsorage.date_double ( datetime timestamp, value double );
 
 
 CREATE TABLE tsorage.observations (
-                                      metric_ text,
-                                      shard_ text,
-                                      interval_ text,    -- raw, 1m, 1h, 1d
-                                      aggregator_ text,  -- raw, first, last, sum, min, max, count, (no mean => replace by sum / count),  (no delta => replace with last - first)
-                                      datetime_ timestamp,
-                                      value_double_ tsorage.tdouble,
-                                      value_long_ tsorage.tlong,
-                                      value_date_double_ tsorage.date_double,
-                                      PRIMARY KEY ((metric_, shard_, interval_, aggregator_), datetime_)
-) WITH CLUSTERING ORDER BY (datetime_ DESC);
+                                      metric text,
+                                      tagset frozen<map<text, text>>,
+                                      shard text,
+                                      interval text,    -- raw, 1m, 1h, 1d
+                                      aggregator text,  -- raw, first, last, sum, min, max, count, (no mean => replace by sum / count),  (no delta => replace with last - first)
+                                      datetime timestamp,
+                                      value_double tsorage.tdouble,
+                                      value_long tsorage.tlong,
+                                      value_date_double tsorage.date_double,
+                                      PRIMARY KEY ((metric, tagset, shard, interval, aggregator), datetime)
+) WITH CLUSTERING ORDER BY (datetime DESC);
 
 CREATE TABLE tsorage_ts.observations (
-                                         metric_ text,
-                                         shard_ text,
-                                         datetime_ timestamp,
-                                         value_double_ tsorage_ts.tdouble,
-                                         value_long_ tsorage_ts.tlong,
-                                         value_date_double_ tsorage_ts.date_double,
-                                         PRIMARY KEY ((metric_, shard_), datetime_)
-) WITH CLUSTERING ORDER BY (datetime_ DESC);
+                                         metric text,
+                                         tagset frozen<map<text, text>>,
+                                         shard text,
+                                         datetime timestamp,
+                                         value_double tsorage_ts.tdouble,
+                                         value_long tsorage_ts.tlong,
+                                         value_date_double tsorage_ts.date_double,
+                                         PRIMARY KEY ((metric, tagset, shard), datetime)
+) WITH CLUSTERING ORDER BY (datetime DESC);
 
 
 /**
@@ -68,37 +70,31 @@ WITH CLUSTERING ORDER BY (tagvalue ASC);
  */
 CREATE TABLE tsorage.dynamic_tagset(
     metric text,
+    tagset frozen<map<text, text>>,
+    PRIMARY KEY (metric, tagset)
+) WITH CLUSTERING ORDER BY (tagset ASC);
+
+CREATE TABLE tsorage.reverse_dynamic_tagset(
     tagname text,
     tagvalue text,
-    PRIMARY KEY (metric, tagname)
-) WITH CLUSTERING ORDER BY (tagname ASC);
-
-CREATE MATERIALIZED VIEW tsorage.reverse_dynamic_tagset AS
-    SELECT tagname, tagvalue, metric
-    FROM tsorage.dynamic_tagset
-    WHERE tagname IS NOT NULL and tagvalue IS NOT NULL and metric IS NOT NULL
-    PRIMARY KEY ( tagname, tagvalue, metric )
-WITH CLUSTERING ORDER BY (tagvalue ASC, metric ASC);
+    metric text,
+    tagset frozen<map<text, text>>,
+    PRIMARY KEY (tagname, tagvalue, metric, tagset)
+) WITH CLUSTERING ORDER BY (tagvalue ASC, metric ASC, tagset ASC);
 
 CREATE TABLE tsorage.sharded_dynamic_tagset
 (
     metric   text,
     shard    text,
-    tagname  text,
+    tagset frozen<map<text, text>>,
+    PRIMARY KEY ((metric, shard), tagset)
+) WITH CLUSTERING ORDER BY (tagset ASC);
+
+CREATE TABLE tsorage.reverse_sharded_dynamic_tagset(
+    shard text,
+    tagname text,
     tagvalue text,
-    PRIMARY KEY ((metric, shard), tagname)
-) WITH CLUSTERING ORDER BY (tagname ASC);
-
-CREATE MATERIALIZED VIEW tsorage.reverse_sharded_dynamic_tagset AS
-SELECT shard, tagname, tagvalue, metric
-FROM tsorage.sharded_dynamic_tagset
-WHERE shard IS NOT NULL and tagname IS NOT NULL and tagvalue IS NOT NULL and metric IS NOT NULL
-    PRIMARY KEY ( (shard, tagname), tagvalue, metric )
-    WITH CLUSTERING ORDER BY (tagvalue ASC, metric ASC);
-
-CREATE MATERIALIZED VIEW tsorage.reverse_sharded_dynamic_tagname AS
-    SELECT shard, tagname, metric
-    FROM tsorage.sharded_dynamic_tagset
-    WHERE shard IS NOT NULL and tagname IS NOT NULL and metric IS NOT NULL
-PRIMARY KEY ( shard, tagname, metric )
-WITH CLUSTERING ORDER BY (tagname ASC);
+    metric text,
+    tagset frozen<map<text, text>>,
+    PRIMARY KEY ( (shard, tagname), tagvalue, metric, tagset)
+) WITH CLUSTERING ORDER BY (tagvalue ASC, metric ASC);
