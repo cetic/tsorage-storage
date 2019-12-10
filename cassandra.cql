@@ -16,6 +16,9 @@ CREATE TYPE tsorage.tdouble ( value double );
 CREATE TYPE tsorage_ts.pos2d ( longitude double, latitude double );
 CREATE TYPE tsorage.pos2d ( longitude double, latitude double );
 
+CREATE TYPE tsorage_ts.ttext ( value text );
+CREATE TYPE tsorage.ttext ( value text );
+
 CREATE TYPE tsorage_ts.tlong ( value bigint );
 CREATE TYPE tsorage.tlong ( value bigint );
 
@@ -31,6 +34,7 @@ CREATE TABLE tsorage.observations (
                                       datetime timestamp,
                                       value_double tsorage.tdouble,
                                       value_pos2d tsorage.pos2d,
+                                      value_text tsorage.ttext,
                                       value_long tsorage.tlong,
                                       value_date_double tsorage.date_double,
                                       PRIMARY KEY ((metric, tagset, shard, interval, aggregator), datetime)
@@ -43,6 +47,7 @@ CREATE TABLE tsorage_ts.observations (
                                          datetime timestamp,
                                          value_double tsorage_ts.tdouble,
                                          value_pos2d tsorage_ts.pos2d,
+                                         value_text tsorage_ts.ttext,
                                          value_long tsorage_ts.tlong,
                                          value_date_double tsorage_ts.date_double,
                                          PRIMARY KEY ((metric, tagset, shard), datetime)
