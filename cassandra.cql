@@ -22,7 +22,6 @@ CREATE TYPE tsorage.tlong ( value bigint );
 CREATE TYPE tsorage_ts.date_double ( datetime timestamp, value double );
 CREATE TYPE tsorage.date_double ( datetime timestamp, value double );
 
-
 CREATE TABLE tsorage.observations (
                                       metric text,
                                       tagset frozen<map<text, text>>,
@@ -43,7 +42,7 @@ CREATE TABLE tsorage_ts.observations (
                                          shard text,
                                          datetime timestamp,
                                          value_double tsorage_ts.tdouble,
-                                         value_pos2d tsorage.pos2d,
+                                         value_pos2d tsorage_ts.pos2d,
                                          value_long tsorage_ts.tlong,
                                          value_date_double tsorage_ts.date_double,
                                          PRIMARY KEY ((metric, tagset, shard), datetime)
@@ -69,17 +68,6 @@ CREATE MATERIALIZED VIEW tsorage.reverse_static_tagset AS
     WHERE tagname IS NOT NULL AND tagvalue IS NOT NULL
     PRIMARY KEY (tagname, tagvalue, metric)
 WITH CLUSTERING ORDER BY (tagvalue ASC);
-
-INSERT INTO "tsorage"."static_tagset" ("metric", "tagname", "tagvalue") VALUES ('my_metric', 'owner', 'nsa');
-INSERT INTO "tsorage"."static_tagset" ("metric", "tagname", "tagvalue") VALUES ('my_metric', 'quality', 'good');
-
-UPDATE tsorage.static_tagset
-SET tagvalue = 'degree celcius'
-WHERE metric = 'my_metric' AND tagname = 'unit';
-
-UPDATE tsorage.static_tagset
-SET tagvalue = 'cetic'
-WHERE metric = 'my_metric' AND tagname = 'owner';
 
 /**
  * The dynamic tagsets associated with a metric.
@@ -114,14 +102,3 @@ CREATE TABLE tsorage.reverse_sharded_dynamic_tagset(
     tagset frozen<map<text, text>>,
     PRIMARY KEY ( (shard, tagname), tagvalue, metric, tagset)
 ) WITH CLUSTERING ORDER BY (tagvalue ASC, metric ASC);
-
-SELECT distinct tagname
-FROM tsorage.reverse_static_tagset;
-
-SELECT DISTINCT tagname
-FROM tsorage.reverse_dynamic_tagset;
-
-INSERT INTO tsorage.dynamic_tagset (metric, tagname, tagvalue) VALUES ('my_metric', '2019-09', 'owner', 'nsa');
-INSERT INTO tsorage.dynamic_tagset (metric, tagname, tagvalue) VALUES ('my_metric', '2019-09', 'quality', 'good');
-INSERT INTO tsorage.dynamic_tagset (metric, tagname, tagvalue) VALUES ('my_metric', '2019-09', 'quality', 'not-so-good');
-INSERT INTO tsorage.dynamic_tagset (metric, tagname, tagvalue) VALUES ('my_metric 2', '2019-09', 'quality', 'not-so-good');
