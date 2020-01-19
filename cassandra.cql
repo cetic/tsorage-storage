@@ -11,19 +11,24 @@ CREATE  KEYSPACE IF NOT EXISTS tsorage_ts
     AND DURABLE_WRITES = true;
 
 CREATE TYPE tsorage_ts.tdouble ( value double );
+CREATE TYPE tsorage_ts.date_tdouble ( datetime timestamp, value frozen<tsorage_ts.tdouble> );
 CREATE TYPE tsorage.tdouble ( value double );
+CREATE TYPE tsorage.date_tdouble ( datetime timestamp, value frozen<tsorage.tdouble> );
 
 CREATE TYPE tsorage_ts.pos2d ( longitude double, latitude double );
+CREATE TYPE tsorage_ts.date_pos2d ( datetime timestamp, value frozen<tsorage_ts.pos2d> );
 CREATE TYPE tsorage.pos2d ( longitude double, latitude double );
+CREATE TYPE tsorage.date_pos2d ( datetime timestamp, value frozen<tsorage.pos2d> );
 
 CREATE TYPE tsorage_ts.ttext ( value text );
+CREATE TYPE tsorage_ts.date_ttext ( datetime timestamp, value frozen<tsorage_ts.ttext> );
 CREATE TYPE tsorage.ttext ( value text );
+CREATE TYPE tsorage.date_ttext ( datetime timestamp, value frozen<tsorage.ttext> );
 
 CREATE TYPE tsorage_ts.tlong ( value bigint );
+CREATE TYPE tsorage_ts.date_tlong ( datetime timestamp, value frozen<tsorage_ts.tlong> );
 CREATE TYPE tsorage.tlong ( value bigint );
-
-CREATE TYPE tsorage_ts.date_double ( datetime timestamp, value double );
-CREATE TYPE tsorage.date_double ( datetime timestamp, value double );
+CREATE TYPE tsorage.date_tlong ( datetime timestamp, value frozen<tsorage.tlong> );
 
 CREATE TABLE tsorage.observations (
                                       metric text,
@@ -32,11 +37,19 @@ CREATE TABLE tsorage.observations (
                                       interval text,    -- raw, 1m, 1h, 1d
                                       aggregator text,  -- raw, first, last, sum, min, max, count, (no mean => replace by sum / count),  (no delta => replace with last - first)
                                       datetime timestamp,
-                                      value_double tsorage.tdouble,
+
+                                      value_tdouble tsorage.tdouble,
+                                      value_date_tdouble tsorage.date_tdouble,
+
                                       value_pos2d tsorage.pos2d,
-                                      value_text tsorage.ttext,
-                                      value_long tsorage.tlong,
-                                      value_date_double tsorage.date_double,
+                                      value_date_pos2d tsorage.date_pos2d,
+
+                                      value_ttext tsorage.ttext,
+                                      value_date_ttext tsorage.date_pos2d,
+
+                                      value_tlong tsorage.tlong,
+                                      value_date_tlong tsorage.date_tlong,
+
                                       PRIMARY KEY ((metric, tagset, shard, interval, aggregator), datetime)
 ) WITH CLUSTERING ORDER BY (datetime DESC);
 
@@ -45,11 +58,19 @@ CREATE TABLE tsorage_ts.observations (
                                          tagset frozen<map<text, text>>,
                                          shard text,
                                          datetime timestamp,
-                                         value_double tsorage_ts.tdouble,
+
+                                         value_tdouble tsorage_ts.tdouble,
+                                         value_date_tdouble tsorage_ts.date_tdouble,
+
                                          value_pos2d tsorage_ts.pos2d,
-                                         value_text tsorage_ts.ttext,
-                                         value_long tsorage_ts.tlong,
-                                         value_date_double tsorage_ts.date_double,
+                                         value_date_pos2d tsorage_ts.date_pos2d,
+
+                                         value_ttext tsorage_ts.ttext,
+                                         value_date_ttext tsorage_ts.date_ttext,
+
+                                         value_tlong tsorage_ts.tlong,
+                                         value_date_tlong tsorage_ts.date_tlong,
+
                                          PRIMARY KEY ((metric, tagset, shard), datetime)
 ) WITH CLUSTERING ORDER BY (datetime DESC);
 
