@@ -10,27 +10,27 @@ CREATE  KEYSPACE IF NOT EXISTS tsorage_ts
     WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 }
     AND DURABLE_WRITES = true;
 
-CREATE TYPE tsorage_ts.tdouble ( value double );
-CREATE TYPE tsorage_ts.date_tdouble ( datetime timestamp, value frozen<tsorage_ts.tdouble> );
-CREATE TYPE tsorage.tdouble ( value double );
-CREATE TYPE tsorage.date_tdouble ( datetime timestamp, value frozen<tsorage.tdouble> );
+CREATE TYPE IF NOT EXISTS tsorage_ts.tdouble ( value double );
+CREATE TYPE IF NOT EXISTS tsorage_ts.date_tdouble ( datetime timestamp, value frozen<tsorage_ts.tdouble> );
+CREATE TYPE IF NOT EXISTS tsorage.tdouble ( value double );
+CREATE TYPE IF NOT EXISTS tsorage.date_tdouble ( datetime timestamp, value frozen<tsorage.tdouble> );
 
-CREATE TYPE tsorage_ts.pos2d ( longitude double, latitude double );
-CREATE TYPE tsorage_ts.date_pos2d ( datetime timestamp, value frozen<tsorage_ts.pos2d> );
-CREATE TYPE tsorage.pos2d ( longitude double, latitude double );
-CREATE TYPE tsorage.date_pos2d ( datetime timestamp, value frozen<tsorage.pos2d> );
+CREATE TYPE IF NOT EXISTS tsorage_ts.pos2d ( longitude double, latitude double );
+CREATE TYPE IF NOT EXISTS tsorage_ts.date_pos2d ( datetime timestamp, value frozen<tsorage_ts.pos2d> );
+CREATE TYPE IF NOT EXISTS tsorage.pos2d ( longitude double, latitude double );
+CREATE TYPE IF NOT EXISTS tsorage.date_pos2d ( datetime timestamp, value frozen<tsorage.pos2d> );
 
-CREATE TYPE tsorage_ts.ttext ( value text );
-CREATE TYPE tsorage_ts.date_ttext ( datetime timestamp, value frozen<tsorage_ts.ttext> );
-CREATE TYPE tsorage.ttext ( value text );
-CREATE TYPE tsorage.date_ttext ( datetime timestamp, value frozen<tsorage.ttext> );
+CREATE TYPE IF NOT EXISTS tsorage_ts.ttext ( value text );
+CREATE TYPE IF NOT EXISTS tsorage_ts.date_ttext ( datetime timestamp, value frozen<tsorage_ts.ttext> );
+CREATE TYPE IF NOT EXISTS tsorage.ttext ( value text );
+CREATE TYPE IF NOT EXISTS tsorage.date_ttext ( datetime timestamp, value frozen<tsorage.ttext> );
 
-CREATE TYPE tsorage_ts.tlong ( value bigint );
-CREATE TYPE tsorage_ts.date_tlong ( datetime timestamp, value frozen<tsorage_ts.tlong> );
-CREATE TYPE tsorage.tlong ( value bigint );
-CREATE TYPE tsorage.date_tlong ( datetime timestamp, value frozen<tsorage.tlong> );
+CREATE TYPE IF NOT EXISTS tsorage_ts.tlong ( value bigint );
+CREATE TYPE IF NOT EXISTS tsorage_ts.date_tlong ( datetime timestamp, value frozen<tsorage_ts.tlong> );
+CREATE TYPE IF NOT EXISTS tsorage.tlong ( value bigint );
+CREATE TYPE IF NOT EXISTS tsorage.date_tlong ( datetime timestamp, value frozen<tsorage.tlong> );
 
-CREATE TABLE tsorage.observations (
+CREATE TABLE IF NOT EXISTS tsorage.observations (
                                       metric text,
                                       tagset frozen<map<text, text>>,
                                       shard text,
@@ -53,7 +53,7 @@ CREATE TABLE tsorage.observations (
                                       PRIMARY KEY ((metric, tagset, shard, interval, aggregator), datetime)
 ) WITH CLUSTERING ORDER BY (datetime DESC);
 
-CREATE TABLE tsorage_ts.observations (
+CREATE TABLE IF NOT EXISTS tsorage_ts.observations (
                                          metric text,
                                          tagset frozen<map<text, text>>,
                                          shard text,
@@ -78,7 +78,7 @@ CREATE TABLE tsorage_ts.observations (
 /**
  * The static tagsets associated with a metric.
  */
-CREATE TABLE tsorage.static_tagset (
+CREATE TABLE IF NOT EXISTS tsorage.static_tagset (
     metric text,
     tagname text,
     tagvalue text,
@@ -88,7 +88,7 @@ CREATE TABLE tsorage.static_tagset (
 /**
   * The reverse tagset table, for storing the metrics associated with a static tagset.
  */
-CREATE MATERIALIZED VIEW tsorage.reverse_static_tagset AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS tsorage.reverse_static_tagset AS
     SELECT metric, tagname, tagvalue
     FROM tsorage.static_tagset
     WHERE tagname IS NOT NULL AND tagvalue IS NOT NULL
@@ -98,13 +98,13 @@ WITH CLUSTERING ORDER BY (tagvalue ASC);
 /**
  * The dynamic tagsets associated with a metric.
  */
-CREATE TABLE tsorage.dynamic_tagset(
+CREATE TABLE IF NOT EXISTS tsorage.dynamic_tagset(
     metric text,
     tagset frozen<map<text, text>>,
     PRIMARY KEY (metric, tagset)
 ) WITH CLUSTERING ORDER BY (tagset ASC);
 
-CREATE TABLE tsorage.reverse_dynamic_tagset(
+CREATE TABLE IF NOT EXISTS tsorage.reverse_dynamic_tagset(
     tagname text,
     tagvalue text,
     metric text,
@@ -112,7 +112,7 @@ CREATE TABLE tsorage.reverse_dynamic_tagset(
     PRIMARY KEY (tagname, tagvalue, metric, tagset)
 ) WITH CLUSTERING ORDER BY (tagvalue ASC, metric ASC, tagset ASC);
 
-CREATE TABLE tsorage.sharded_dynamic_tagset
+CREATE TABLE IF NOT EXISTS tsorage.sharded_dynamic_tagset
 (
     metric   text,
     shard    text,
@@ -120,7 +120,7 @@ CREATE TABLE tsorage.sharded_dynamic_tagset
     PRIMARY KEY ((metric, shard), tagset)
 ) WITH CLUSTERING ORDER BY (tagset ASC);
 
-CREATE TABLE tsorage.reverse_sharded_dynamic_tagset(
+CREATE TABLE IF NOT EXISTS tsorage.reverse_sharded_dynamic_tagset(
     shard text,
     tagname text,
     tagvalue text,
