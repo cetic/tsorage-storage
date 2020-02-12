@@ -5,6 +5,7 @@
 # Exit status codes.
 EXIT_SUCCESS=0
 EXIT_USAGE_ERROR_CODE=1
+EXIT_CASSANDRA_ERROR=2
 
 # Print usage of this script.
 usage() {
@@ -58,6 +59,14 @@ main() {
 
   /usr/bin/cqlsh --cqlversion=3.4.4 -f cassandra_init.cql $CASSANDRA_HOST $CASSANDRA_PORT && \
     /usr/bin/cqlsh --cqlversion=3.4.4 -f cassandra_check.cql $CASSANDRA_HOST $CASSANDRA_PORT > /dev/null
+
+  if [ $? -eq 0 ]; then
+    echo The database has just been successfully initialized.
+  else
+    echo Something went wrong during the database initialization. Please, check the Cassandra host and port and, \
+      if a Cassandra database already exists at this address, check the correctness of the schema of this database. >&2
+    exit $EXIT_CASSANDRA_ERROR
+  fi
 }
 
 main "$@"
