@@ -2,33 +2,37 @@
  * CQL file used to initialize the database in test environment.
  */
 
-CREATE  KEYSPACE IF NOT EXISTS tsorage
+CREATE KEYSPACE IF NOT EXISTS tsorage
     WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 }
     AND DURABLE_WRITES = true;
 
-CREATE  KEYSPACE IF NOT EXISTS tsorage_ts
+CREATE KEYSPACE IF NOT EXISTS tsorage_ts
     WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 }
     AND DURABLE_WRITES = true;
 
 CREATE TYPE tsorage_ts.tdouble ( value double );
-CREATE TYPE tsorage_ts.date_tdouble ( datetime timestamp, value frozen<tsorage_ts.tdouble> );
 CREATE TYPE tsorage.tdouble ( value double );
 CREATE TYPE tsorage.date_tdouble ( datetime timestamp, value frozen<tsorage.tdouble> );
 
 CREATE TYPE tsorage_ts.pos2d ( longitude double, latitude double );
-CREATE TYPE tsorage_ts.date_pos2d ( datetime timestamp, value frozen<tsorage_ts.pos2d> );
 CREATE TYPE tsorage.pos2d ( longitude double, latitude double );
 CREATE TYPE tsorage.date_pos2d ( datetime timestamp, value frozen<tsorage.pos2d> );
 
 CREATE TYPE tsorage_ts.ttext ( value text );
-CREATE TYPE tsorage_ts.date_ttext ( datetime timestamp, value frozen<tsorage_ts.ttext> );
 CREATE TYPE tsorage.ttext ( value text );
 CREATE TYPE tsorage.date_ttext ( datetime timestamp, value frozen<tsorage.ttext> );
 
 CREATE TYPE tsorage_ts.tlong ( value bigint );
-CREATE TYPE tsorage_ts.date_tlong ( datetime timestamp, value frozen<tsorage_ts.tlong> );
 CREATE TYPE tsorage.tlong ( value bigint );
 CREATE TYPE tsorage.date_tlong ( datetime timestamp, value frozen<tsorage.tlong> );
+
+CREATE TYPE tsorage_ts.tbool ( value boolean );
+CREATE TYPE tsorage.tbool ( value boolean );
+CREATE TYPE tsorage.date_tbool ( datetime timestamp, value frozen<tsorage.tbool> );
+
+CREATE TYPE tsorage_ts.tbinary ( value blob );
+CREATE TYPE tsorage.tbinary ( value blob );
+CREATE TYPE tsorage.date_tbinary ( datetime timestamp, value frozen<tsorage.tbinary> );
 
 CREATE TABLE tsorage.observations (
                                       metric text,
@@ -45,10 +49,16 @@ CREATE TABLE tsorage.observations (
                                       value_date_pos2d tsorage.date_pos2d,
 
                                       value_ttext tsorage.ttext,
-                                      value_date_ttext tsorage.date_pos2d,
+                                      value_date_ttext tsorage.date_ttext,
 
                                       value_tlong tsorage.tlong,
                                       value_date_tlong tsorage.date_tlong,
+
+                                      value_tbool tsorage.tbool,
+                                      value_date_tbool tsorage.date_tbool,
+
+                                      value_tbinary tsorage.tbinary,
+                                      value_date_tbinary tsorage.date_tbinary,
 
                                       PRIMARY KEY ((metric, tagset, shard, interval, aggregator), datetime)
 ) WITH CLUSTERING ORDER BY (datetime DESC);
@@ -60,16 +70,16 @@ CREATE TABLE tsorage_ts.observations (
                                          datetime timestamp,
 
                                          value_tdouble tsorage_ts.tdouble,
-                                         value_date_tdouble tsorage_ts.date_tdouble,
 
                                          value_pos2d tsorage_ts.pos2d,
-                                         value_date_pos2d tsorage_ts.date_pos2d,
 
                                          value_ttext tsorage_ts.ttext,
-                                         value_date_ttext tsorage_ts.date_ttext,
 
                                          value_tlong tsorage_ts.tlong,
-                                         value_date_tlong tsorage_ts.date_tlong,
+
+                                         value_tbool tsorage_ts.tbool,
+
+                                         value_tbinary tsorage_ts.tbinary,
 
                                          PRIMARY KEY ((metric, tagset, shard), datetime)
 ) WITH CLUSTERING ORDER BY (datetime DESC);
