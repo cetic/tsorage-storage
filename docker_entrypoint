@@ -1,0 +1,72 @@
+#!/bin/sh
+#
+# Use this shell script to initialize the Cassandra database of TSorage.
+
+# Exit status codes.
+EXIT_SUCCESS=0
+EXIT_USAGE_ERROR_CODE=1
+EXIT_CASSANDRA_ERROR=2
+
+# Print usage of this script.
+usage() {
+  cat << USAGE
+Usage: docker_entrypoint [-h] [--help] <cassandra-host> <cassandra-port>.
+
+Help: Use this shell script to initialize the Cassandra database of TSorage.
+If the arguments are unset, then this script will use environment variables instead.
+
+Arguments:
+  cassandra-host     The Cassandra host you want to reach. The corresponding environment variable is CASSANDRA_HOST.
+  cassandra-port     The Cassandra port of the Cassandra host you want to reach. The corresponding environment variable
+                     is CASSANDRA_PORT.
+
+Option:
+  -h, --help         Print this help text and exit.
+USAGE
+}
+
+main() {
+  for arg in "$@"; do
+    shift
+    case "$arg" in
+      "--help") set -- "$@" "-h" ;;
+      *)        set -- "$@" "$arg"
+    esac
+  done
+
+  while getopts "h" option; do
+    case $option in
+      h)
+        usage
+        exit $EXIT_SUCCESS
+        ;;
+      *)
+        usage
+        exit $EXIT_USAGE_ERROR_CODE
+        ;;
+    esac
+  done
+
+  shift $(expr $OPTIND - 1)
+
+  if [[ ! -z "${1}" ]]; then # The first argument is defined.
+    CASSANDRA_HOST=${1}
+  fi
+
+  if [[ ! -z "${2}" ]]; then # The second argument is defined.
+    CASSANDRA_PORT=${2}
+  fi
+
+  /usr/bin/cqlsh --cqlversion=3.4.4 -f cassandra_init.cql $CASSANDRA_HOST $CASSANDRA_PORT && \
+    /usr/bin/cqlsh --cqlversion=3.4.4 -f cassandra_check.cql $CASSANDRA_HOST $CASSANDRA_PORT > /dev/null
+
+  if [ $? -eq 0 ]; then
+    echo The database has just been successfully initialized.
+  else
+    echo Something went wrong during the database initialization. Please, check the Cassandra host and port and, \
+      if a Cassandra database already exists at this address, check the correctness of the schema of this database. >&2
+    exit $EXIT_CASSANDRA_ERROR
+  fi
+}
+
+main "$@"
